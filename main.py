@@ -27,6 +27,10 @@ parser.add_argument('-beta', '--beta', default=10, type=int,
                     help='beta to train the VAE for')                 
 args = vars(parser.parse_args())
 epochs = args['epochs']
+batch_size = args['batch_size']
+lr = args['learning_rate']
+beta = args['beta']
+
 # %%
 # leanring parameters
 # epochs = 100
@@ -35,6 +39,7 @@ epochs = args['epochs']
 imgtrain_size = 64
 # beta = 10
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("device: ",device)
 
 # %%
 # transforms
