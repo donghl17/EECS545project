@@ -33,7 +33,7 @@ beta = args['beta']
 
 # %%
 # leanring parameters
-# epochs = 100
+#epochs = 0
 # batch_size = 64
 # lr = 0.0001
 imgtrain_size = 64
@@ -196,4 +196,4 @@ axes[1, 2].set_xlabel('Epochs')
 axes[1, 2].set_ylabel('KLD')
 fig.tight_layout()
 # plt.show()
-fig.savefig('./result_loss.png')
+fig.savefig('./result_loss'+str(epochs)+'.png')
