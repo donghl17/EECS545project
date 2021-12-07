@@ -135,4 +135,4 @@ class VAE(nn.Module):
         x = F.relu(self.dec4(x))
         x = F.relu(self.dec5(x))
         reconstruction = torch.sigmoid(self.dec6(x))
-        return reconstruction, mu, log_var
+        return reconstruction, z
