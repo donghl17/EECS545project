@@ -1,3 +1,4 @@
 *.out
 *.pth
 __pycache__
+output

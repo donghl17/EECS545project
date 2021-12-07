@@ -21,7 +21,7 @@ parser.add_argument('-e', '--epochs', default=10, type=int,
                     help='number of epochs to train the VAE for')
 parser.add_argument('-b', '--batch_size', default=64, type=int,
                     help='batch size to train the VAE for')
-parser.add_argument('-l', '--learning_rate', default=0.0001, type=int,
+parser.add_argument('-l', '--learning_rate', default=0.0001, type=float,
                     help='learning rate to train the VAE for')       
 parser.add_argument('-beta', '--beta', default=10, type=int,
                     help='beta to train the VAE for')                 
@@ -83,24 +83,29 @@ def final_loss(bce_loss, mu, logvar):
 
 # %%
 def fit(model, dataloader, beta=1):
+    print("0")
     model.train()
+    print("1")
     running_loss = 0.0
     running_BCE = 0.0
     running_KLD = 0.0
-    for i, data in tqdm(enumerate(dataloader), total=int(len(train_data) / dataloader.batch_size)):
-        data, _ = data
-        data = data.to(device)
-        # data = data.view(data.size(0), -1)
-        optimizer.zero_grad()
-        reconstruction, mu, logvar = model(data)
-        bce_loss = criterion(reconstruction, data)
-        BCE, KLD = final_loss(bce_loss, mu, logvar)
-        loss = BCE + beta * KLD
-        running_loss += loss.item()
-        running_KLD += KLD.item()
-        running_BCE += BCE.item()
-        loss.backward()
-        optimizer.step()
+    with tqdm(enumerate(dataloader), total=int(len(train_data) / dataloader.batch_size)) as t:
+        for i, data in t:
+        # for i, data in tqdm(enumerate(dataloader), total=int(len(train_data) / dataloader.batch_size)):
+            t.close()
+            data, _ = data
+            data = data.to(device)
+            # data = data.view(data.size(0), -1)
+            optimizer.zero_grad()
+            reconstruction, mu, logvar = model(data)
+            bce_loss = criterion(reconstruction, data)
+            BCE, KLD = final_loss(bce_loss, mu, logvar)
+            loss = BCE + beta * KLD
+            running_loss += loss.item()
+            running_KLD += KLD.item()
+            running_BCE += BCE.item()
+            loss.backward()
+            optimizer.step()
     train_loss = running_loss / len(dataloader.dataset)
     train_KLD = running_KLD / len(dataloader.dataset)
     train_BCE = running_BCE / len(dataloader.dataset)
@@ -113,24 +118,27 @@ def validate(model, dataloader, beta=1):
     running_BCE = 0.0
     running_KLD = 0.0
     with torch.no_grad():
-        for i, data in tqdm(enumerate(dataloader), total=int(len(val_data) / dataloader.batch_size)):
-            data, _ = data
-            data = data.to(device)
-            # data = data.view(data.size(0), -1)
-            reconstruction, mu, logvar = model(data)
-            bce_loss = criterion(reconstruction, data)
-            BCE, KLD = final_loss(bce_loss, mu, logvar)
-            loss = BCE + beta * KLD
-            running_loss += loss.item()
-            running_KLD += KLD.item()
-            running_BCE += BCE.item()
+        with tqdm(enumerate(dataloader), total=int(len(val_data) / dataloader.batch_size)) as t:
+            for i, data in t:
+            # for i, data in tqdm(enumerate(dataloader), total=int(len(val_data) / dataloader.batch_size)):
+                t.close()
+                data, _ = data
+                data = data.to(device)
+                # data = data.view(data.size(0), -1)
+                reconstruction, mu, logvar = model(data)
+                bce_loss = criterion(reconstruction, data)
+                BCE, KLD = final_loss(bce_loss, mu, logvar)
+                loss = BCE + beta * KLD
+                running_loss += loss.item()
+                running_KLD += KLD.item()
+                running_BCE += BCE.item()
 
-            # save the last batch input and output of every epoch
-            if i == int(len(val_data) / dataloader.batch_size) - 1:
-                num_rows = 8
-                both = torch.cat((data.view(batch_size, 3, imgtrain_size, imgtrain_size)[:8],
-                                  reconstruction.view(batch_size, 3, imgtrain_size, imgtrain_size)[:8]))
-                save_image(both.cpu(), f"./outputs/output{epoch}.png", nrow=num_rows)
+                # save the last batch input and output of every epoch
+                if i == int(len(val_data) / dataloader.batch_size) - 1:
+                    num_rows = 8
+                    both = torch.cat((data.view(batch_size, 3, imgtrain_size, imgtrain_size)[:8],
+                                      reconstruction.view(batch_size, 3, imgtrain_size, imgtrain_size)[:8]))
+                    save_image(both.cpu(), './outputs/output'+str(epoch)+'.png', nrow=num_rows)
     val_loss = running_loss / len(dataloader.dataset)
     val_BCE = running_BCE / len(dataloader.dataset)
     val_KLD = running_KLD / len(dataloader.dataset)
@@ -145,7 +153,7 @@ val_loss = []
 val_BCE = []
 val_KLD = []
 for epoch in range(epochs):
-    print(f"Epoch {epoch + 1} of {epochs}")
+    print('Epoch '+str(epoch + 1)+' of '+str(epochs))
     train_epoch_loss, train_epoch_BCE, train_epoch_KLD = fit(model, train_loader, beta)
     val_epoch_loss, val_epoch_BCE, val_epoch_KLD = validate(model, val_loader, beta)
     train_loss.append(train_epoch_loss)
@@ -154,8 +162,8 @@ for epoch in range(epochs):
     train_KLD.append(train_epoch_KLD)
     val_BCE.append(val_epoch_BCE)
     val_KLD.append(val_epoch_KLD)
-    print(f"Train Loss: {train_epoch_loss:.4f}, Train BCE: {train_epoch_BCE:.4f}, Train KLD: {train_epoch_KLD:.4f}")
-    print(f"Val Loss: {val_epoch_loss:.4f}, Val BCE: {val_epoch_BCE:.4f}, Val KLD: {val_epoch_KLD:.4f}")
+    print('Train Loss: '+str(train_epoch_loss)+', Train BCE: '+str(train_epoch_BCE)+', Train KLD: '+str(train_epoch_KLD))
+    print('Val Loss: '+str(val_epoch_loss)+', Val BCE: '+str(val_epoch_BCE)+', Val KLD: '+str(val_epoch_KLD))
 PATH = './beta-VAE.pth'
 torch.save(model.state_dict(), PATH)
 
